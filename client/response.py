@@ -1,6 +1,7 @@
-from dataclasses import dataclass
-from enum import Enum
 from __future__ import annotations
+from enum import Enum
+from dataclasses import dataclass
+
 
 
 @dataclass
@@ -14,6 +15,7 @@ class TextDelta:
 class EventType(str,Enum):
     TEXT_DELTA = "text_delta"
     MESSAGE_COMPLETE = "message_complete"
+    ERROR = "error"
 
 
 
@@ -36,7 +38,7 @@ class TokenUsage:
 
 
 @dataclass
-class steam_event:
+class StreamEvent:
     type: EventType
     text_delta: TextDelta| None = None
     error: str| None = None
