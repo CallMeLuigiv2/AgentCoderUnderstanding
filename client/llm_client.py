@@ -3,8 +3,8 @@ from openai import AsyncOpenAI, RateLimitError, APIConnectionError, APIError
 from typing import List, Dict, Any
 from client.response import TextDelta
 from client.response import TokenUsage
+from client.response import StreamEventType
 from client.response import StreamEvent
-from client.response import EventType
 from typing import AsyncGenerator
 
 class LLMClient:
@@ -57,7 +57,7 @@ class LLMClient:
                 await asyncio.sleep(wait_time)
             else:
                 yield StreamEvent(
-                    type=EventType.ERROR,
+                    type=StreamEventType.ERROR,
                     error=str(f"Max retries reached: {e}"),
                 )
                 return
@@ -67,14 +67,14 @@ class LLMClient:
                 await asyncio.sleep(wait_time)
             else:
                 yield StreamEvent(
-                    type=EventType.ERROR,
+                    type=StreamEventType.ERROR,
                     error=str(f"Connection error: {e}"),
                 )
                 return
         except APIError as e:
 
                 yield StreamEvent(
-                    type=EventType.ERROR,
+                    type=StreamEventType.ERROR,
                     error=str(f"API error: {e}"),
                 )
                 return
@@ -113,12 +113,12 @@ class LLMClient:
                 finish_reason = choice.finish_reason
             if delta.content:
                 yield StreamEvent(
-                    type=EventType.TEXT_DELTA,
+                    type=StreamEventType.TEXT_DELTA,
                     text_delta=TextDelta(delta.content),
                 )
 
         yield StreamEvent(
-            type=EventType.MESSAGE_COMPLETE,
+            type=StreamEventType.MESSAGE_COMPLETE,
             finish_reason=finish_reason,
             usage=usage,
         )
@@ -152,7 +152,7 @@ class LLMClient:
       
         
         return StreamEvent(
-            type=EventType.MESSAGE_COMPLETE,
+            type=StreamEventType.MESSAGE_COMPLETE,
             text_delta=text_delta,
             finish_reason=choice.finish_reason,
             usage=usage,
