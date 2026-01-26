@@ -40,6 +40,7 @@ class LLMClient:
                 "model":"ministral-3:8b-instruct-2512-q4_K_M",
                 "messages":messages,
                 "stream":stream,
+                
             }
     #do this for 3 tries with exponential backof
      for attempt in range(self.max_retries +1):

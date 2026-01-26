@@ -26,6 +26,8 @@ class CLI:
             return None
         
         assistant_streaming = False
+        final_response:str | None = None
+
         async for event in self.agent.run(message):
             if event.type == AgentStreamEventType.TEXT_DELTA:
                 content = event.data.get("content","")
@@ -38,6 +40,9 @@ class CLI:
                 if assistant_streaming:
                     self.tui.end_assistant()
                     assistant_streaming = False
+            elif event.type == AgentStreamEventType.AGENT_ERROR:
+                error = event.data.get("error","Unknown error occurred")
+                console.print(f"[error]{error}[/error]")
         return final_response
 
 @click.command()

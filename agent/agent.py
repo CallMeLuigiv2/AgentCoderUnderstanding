@@ -6,38 +6,42 @@ from client import response
 from client.llm_client import LLMClient
 from client.response import StreamEventType
 from agent.events import AgentStreamEventType
+from context.manager import ContextManager
 
 
 
 class Agent:
     def __init__(self,prompt:str | None = None):
         self.client = LLMClient()
-        self.messages = []
+        self.context_manager = ContextManager()
 
         if prompt:
-            self.messages.append({"role":"system", "content":prompt})
+            self.context_manager.add_system_message(prompt)
 
     async def run(self, prompt: str)->AsyncGenerator[AgentEvent, None]:
-        self.messages.append({"role": "user", "content": prompt})
         yield AgentEvent.agent_start(prompt)
+        self.context_manager.add_user_message(prompt)
+  
 
-        final_response = ""
+        final_response:str | None = None
         async for event in self.agentic_loop():
             yield event
             if event.type == AgentStreamEventType.TEXT_COMPLETE:
                 final_response = event.data.get("content")
         if final_response:
-             self.messages.append({"role": "assistant", "content": final_response})
+             self.context_manager.add_assistant_message(final_response)
         yield AgentEvent.agent_end(final_response)
 
     async def agentic_loop(self)->AsyncGenerator[AgentEvent, None]:
 
-        #messages = [{"role":"user", "content":"sonic?"}] 
         response_text = "" 
 
 
         
-        async for event in self.client.chat_completion(self.messages,True):
+        async for event in self.client.chat_completion(
+            self.context_manager.get_messages(),
+            True
+            ):
 
            if event.type == StreamEventType.TEXT_DELTA:
                 if event.text_delta:
@@ -49,6 +53,10 @@ class Agent:
              yield AgentEvent.agent_error(
                 event.error or "Unknown error occurred",
                 )
+             return
+        self.context_manager.add_assistant_message(
+            response_text or None,
+        )
         if response_text:
             yield AgentEvent.text_complete(response_text)
 
